@@ -9,8 +9,9 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/**/*.ts",
-    "migrate": "npx prisma migrate dev",
-    "generate": "npx prisma generate"
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "express": "^4.21.1",
@@ -18,8 +19,8 @@
     "helmet": "^8.0.0",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
-    "prisma": "^6.1.0",
-    "@prisma/client": "^6.1.0",
+    "drizzle-orm": "^0.35.3",
+    "better-sqlite3": "^11.5.0",
     "puppeteer": "^24.10.0",
     "axios": "^1.7.9",
     "multer": "^1.4.5-lts.2",
@@ -33,14 +34,13 @@
     "@types/multer": "^1.4.12",
     "@types/node": "^22.10.2",
     "@types/node-cron": "^3.0.11",
+    "@types/better-sqlite3": "^7.6.12",
+    "drizzle-kit": "^0.27.2",
     "typescript": "^5.7.2",
     "ts-node-dev": "^2.0.0",
     "@typescript-eslint/eslint-plugin": "^8.18.2",
     "@typescript-eslint/parser": "^8.18.2",
     "eslint": "^9.17.0"
-  },
-  "prisma": {
-    "binaryTargets": ["native", "linux-musl", "linux-musl-openssl-3.0.x"]
   },
   "keywords": ["mercedes", "car", "search", "helper"],
   "author": "Mercedes Helper",

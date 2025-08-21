@@ -15,18 +15,17 @@ mkdir -p /app/data
 if [ ! -f "/app/data/production.db" ]; then
     echo "🗄️  Database not found, initializing..."
     
-    # Run Prisma db push to create the database
-    echo "🔄 Pushing database schema..."
-    npx prisma db push --accept-data-loss
+    # Generate and apply migrations with Drizzle
+    echo "🔄 Generating database migrations..."
+    npm run db:generate
+    
+    echo "🔄 Applying database migrations..."
+    npm run db:migrate
     
     echo "✅ Database initialized successfully!"
 else
     echo "✅ Database already exists"
 fi
-
-# Ensure Prisma client is generated
-echo "🔧 Ensuring Prisma client is ready..."
-npx prisma generate
 
 # Start the application
 echo "🚀 Starting Mercedes Helper application..."

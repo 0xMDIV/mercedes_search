@@ -24,8 +24,7 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Generate Prisma client with correct binary targets
-RUN npx prisma generate --schema=./prisma/schema.prisma
+# Build is complete - no database client generation needed
 
 # Production stage
 FROM node:18-bullseye-slim AS production
@@ -71,19 +70,12 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-COPY prisma ./prisma/
 
 # Install only production dependencies
 RUN npm ci --only=production && npm cache clean --force
 
-# Regenerate Prisma client for the production environment
-RUN npx prisma generate
-
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
 # Copy other necessary files
 COPY public ./public
