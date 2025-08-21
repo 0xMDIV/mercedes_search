@@ -1,14 +1,13 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:18-bullseye-slim AS builder
 
 # Install build dependencies
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     openssl \
-    openssl-dev \
-    libc6-compat \
     python3 \
     make \
-    g++
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -29,30 +28,44 @@ RUN npm run build
 RUN npx prisma generate --schema=./prisma/schema.prisma
 
 # Production stage
-FROM node:18-alpine AS production
+FROM node:18-bullseye-slim AS production
 
-# Install runtime dependencies including OpenSSL for Prisma
-RUN apk add --no-cache \
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
     chromium \
-    nss \
-    freetype \
-    freetype-dev \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont \
+    fonts-liberation \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libatspi2.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libdrm2 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libwayland-client0 \
+    libx11-6 \
+    libx11-xcb1 \
+    libxcb1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxrandr2 \
+    libxss1 \
+    libxtst6 \
+    lsb-release \
+    wget \
+    xdg-utils \
     openssl \
-    openssl-dev \
-    libc6-compat \
+    ca-certificates \
     curl \
-    wget
+    && rm -rf /var/lib/apt/lists/*
 
-# Tell Puppeteer to skip installing Chromium. We'll be using the installed package.
+# Tell Puppeteer to skip installing Chromium
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-
-# Prisma environment variables
-ENV PRISMA_CLI_BINARY_TARGETS="linux-musl,linux-musl-openssl-3.0.x" \
-    PRISMA_CLIENT_ENGINE_TYPE="library"
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 WORKDIR /app
 
@@ -83,10 +96,8 @@ RUN mkdir -p uploads data
 RUN chmod +x /usr/local/bin/startup.sh
 
 # Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S mercedes -u 1001 && \
-    chown -R mercedes:nodejs /app && \
-    chmod 755 /app/data
+RUN groupadd -r mercedes && useradd -r -g mercedes mercedes && \
+    chown -R mercedes:mercedes /app
 
 USER mercedes
 
