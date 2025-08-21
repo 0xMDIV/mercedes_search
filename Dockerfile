@@ -26,7 +26,7 @@ COPY . .
 RUN npm run build
 
 # Generate Prisma client with correct binary targets
-RUN npx prisma generate
+RUN npx prisma generate --schema=./prisma/schema.prisma
 
 # Production stage
 FROM node:18-alpine AS production
@@ -61,6 +61,9 @@ COPY package*.json ./
 
 # Install only production dependencies
 RUN npm ci --only=production && npm cache clean --force
+
+# Regenerate Prisma client for the production environment
+RUN npx prisma generate --schema=./prisma/schema.prisma
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
