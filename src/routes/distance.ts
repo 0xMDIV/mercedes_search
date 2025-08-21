@@ -103,7 +103,7 @@ router.post('/calculate/:vehicleId', async (req, res) => {
     }
 
     // Calculate route from Hildesheim to dealer
-    const routeInfo = await calculateRoute(HILDESHEIM_COORDS, [dealerCoords.lat, dealerCoords.lon]);
+    let routeInfo = await calculateRoute(HILDESHEIM_COORDS, [dealerCoords.lat, dealerCoords.lon]);
     
     if (!routeInfo) {
       // Fallback to simple distance calculation

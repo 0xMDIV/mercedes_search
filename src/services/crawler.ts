@@ -68,8 +68,8 @@ export class MercedesCrawler {
         data.vehicleNumber = getText('.vehicle-id, .stock-number, .fahrzeugnummer');
         
         // Extract specifications
-        const specs: any = {};
-        document.querySelectorAll('.spec-item, .vehicle-spec, .specification-item').forEach(item => {
+        const specs: { [key: string]: string } = {};
+        document.querySelectorAll('.spec-item, .vehicle-spec, .specification-item').forEach((item: Element) => {
           const label = item.querySelector('.spec-label, .label')?.textContent?.trim();
           const value = item.querySelector('.spec-value, .value')?.textContent?.trim();
           if (label && value) {
@@ -99,7 +99,7 @@ export class MercedesCrawler {
 
         // Extract images
         const images: string[] = [];
-        document.querySelectorAll('img[src*="vehicle"], img[src*="mercedes"], .gallery img, .vehicle-images img').forEach(img => {
+        document.querySelectorAll('img[src*="vehicle"], img[src*="mercedes"], .gallery img, .vehicle-images img').forEach((img: Element) => {
           const src = img.getAttribute('src');
           if (src && !src.includes('placeholder') && !src.includes('loading')) {
             images.push(src.startsWith('http') ? src : 'https://gebrauchtwagen.mercedes-benz.de' + src);
@@ -119,7 +119,7 @@ export class MercedesCrawler {
           const features: string[] = [];
           const container = document.querySelector(containerSelector);
           if (container) {
-            container.querySelectorAll('li, .feature-item, .equipment-item').forEach(item => {
+            container.querySelectorAll('li, .feature-item, .equipment-item').forEach((item: Element) => {
               const text = item.textContent?.trim();
               if (text) features.push(text);
             });
