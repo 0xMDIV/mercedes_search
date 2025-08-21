@@ -2,24 +2,25 @@ version: '3.8'
 
 services:
   app:
-    build: .
+    image: mercedes-helper:latest
     container_name: mercedes-helper-app
     environment:
       - NODE_ENV=production
       - DATABASE_URL=file:/app/data/production.db
-      - JWT_SECRET=${JWT_SECRET:-change-this-secret-in-production}
+      - JWT_SECRET=${JWT_SECRET}
       - PORT=3000
     volumes:
       - /opt/mercedes_search/data:/app/data
       - /opt/mercedes_search/uploads:/app/uploads
     restart: unless-stopped
-    expose:
-      - "3000"
+    networks:
+      - mercedes-net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/vehicles"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/vehicles"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 40s
 
   nginx:
     image: nginx:alpine
@@ -34,5 +35,9 @@ services:
     depends_on:
       - app
     restart: unless-stopped
+    networks:
+      - mercedes-net
 
-# No volumes section needed - using direct bind mounts
+networks:
+  mercedes-net:
+    driver: bridge
