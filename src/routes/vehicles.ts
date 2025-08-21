@@ -1,5 +1,7 @@
 import express from 'express';
-import { prisma } from '../lib/database';
+import { db } from '../lib/database';
+import { vehicles, users } from '../db/schema';
+import { eq, and, or, like, lte, desc, asc, sql, count } from 'drizzle-orm';
 import { optionalAuth } from '../middleware/auth';
 
 const router = express.Router();
@@ -16,87 +18,126 @@ router.get('/', optionalAuth, async (req: any, res) => {
       offset = 0 
     } = req.query;
 
-    const where: any = {};
+    let whereConditions: any[] = [];
 
     // Search filter
     if (search) {
-      where.OR = [
-        { model: { contains: search, mode: 'insensitive' } },
-        { dealerLocation: { contains: search, mode: 'insensitive' } },
-        { exteriorColor: { contains: search, mode: 'insensitive' } },
-        { fuelType: { contains: search, mode: 'insensitive' } }
-      ];
+      whereConditions.push(
+        or(
+          like(vehicles.model, `%${search}%`),
+          like(vehicles.dealerLocation, `%${search}%`),
+          like(vehicles.exteriorColor, `%${search}%`),
+          like(vehicles.fuelType, `%${search}%`)
+        )
+      );
     }
 
     // Fuel type filter
     if (fuelType && fuelType !== '') {
-      where.fuelType = { contains: fuelType, mode: 'insensitive' };
+      whereConditions.push(like(vehicles.fuelType, `%${fuelType}%`));
     }
 
     // Transmission filter
     if (transmission && transmission !== '') {
-      where.transmission = { contains: transmission, mode: 'insensitive' };
+      whereConditions.push(like(vehicles.transmission, `%${transmission}%`));
     }
 
     // Price filter
     if (maxPrice && parseInt(maxPrice) > 0) {
-      where.price = { lte: parseInt(maxPrice) };
+      whereConditions.push(lte(vehicles.price, parseInt(maxPrice)));
     }
+
+    const whereCondition = whereConditions.length > 0 ? and(...whereConditions) : undefined;
 
     // Sorting
-    let orderBy: any = {};
+    let orderByCondition;
     switch (sortBy) {
       case 'price_asc':
-        orderBy = { price: 'asc' };
+        orderByCondition = asc(vehicles.price);
         break;
       case 'price_desc':
-        orderBy = { price: 'desc' };
-        break;
-      case 'distance_asc':
-        orderBy = { distanceFromHildesheim: 'asc' };
-        break;
-      case 'mileage_asc':
-        orderBy = { mileage: 'asc' };
+        orderByCondition = desc(vehicles.price);
         break;
       case 'year_desc':
-        orderBy = { modelYear: 'desc' };
+        orderByCondition = desc(vehicles.modelYear);
         break;
-      case 'created_desc':
-        orderBy = { createdAt: 'desc' };
+      case 'year_asc':
+        orderByCondition = asc(vehicles.modelYear);
+        break;
+      case 'mileage_asc':
+        orderByCondition = asc(vehicles.mileage);
+        break;
+      case 'mileage_desc':
+        orderByCondition = desc(vehicles.mileage);
+        break;
+      case 'distance_asc':
+        orderByCondition = asc(vehicles.distanceFromHildesheim);
+        break;
+      case 'distance_desc':
+        orderByCondition = desc(vehicles.distanceFromHildesheim);
         break;
       default:
-        orderBy = { price: 'asc' };
+        orderByCondition = asc(vehicles.price);
     }
 
-    // Get favorites first if user is logged in
-    const vehicles = await prisma.vehicle.findMany({
-      where,
-      orderBy: [
-        { isFavorite: 'desc' },
-        { favoriteOrder: 'asc' },
-        orderBy
-      ],
-      take: parseInt(limit),
-      skip: parseInt(offset),
-      include: {
-        addedBy: {
-          select: {
-            username: true
-          }
-        }
-      }
-    });
+    const vehiclesList = await db.select({
+      id: vehicles.id,
+      mercedesUrl: vehicles.mercedesUrl,
+      mainImage: vehicles.mainImage,
+      imageGallery: vehicles.imageGallery,
+      price: vehicles.price,
+      manufacturer: vehicles.manufacturer,
+      model: vehicles.model,
+      vehicleNumber: vehicles.vehicleNumber,
+      vehicleType: vehicles.vehicleType,
+      firstRegistration: vehicles.firstRegistration,
+      modelYear: vehicles.modelYear,
+      mileage: vehicles.mileage,
+      power: vehicles.power,
+      fuelType: vehicles.fuelType,
+      transmission: vehicles.transmission,
+      exteriorColor: vehicles.exteriorColor,
+      interiorColor: vehicles.interiorColor,
+      upholstery: vehicles.upholstery,
+      acceleration: vehicles.acceleration,
+      warranty: vehicles.warranty,
+      chargingDuration: vehicles.chargingDuration,
+      electricRange: vehicles.electricRange,
+      energy: vehicles.energy,
+      dealerLocation: vehicles.dealerLocation,
+      distanceFromHildesheim: vehicles.distanceFromHildesheim,
+      travelTimeFromHildesheim: vehicles.travelTimeFromHildesheim,
+      interior: vehicles.interior,
+      exterior: vehicles.exterior,
+      infotainment: vehicles.infotainment,
+      safetyTech: vehicles.safetyTech,
+      packages: vehicles.packages,
+      isFavorite: vehicles.isFavorite,
+      favoriteOrder: vehicles.favoriteOrder,
+      createdAt: vehicles.createdAt,
+      updatedAt: vehicles.updatedAt,
+      addedById: vehicles.addedById,
+      addedByUsername: users.username
+    })
+    .from(vehicles)
+    .leftJoin(users, eq(vehicles.addedById, users.id))
+    .where(whereCondition)
+    .orderBy(orderByCondition)
+    .limit(parseInt(limit))
+    .offset(parseInt(offset));
 
-    const total = await prisma.vehicle.count({ where });
+    const [totalCount] = await db.select({ count: count() })
+      .from(vehicles)
+      .where(whereCondition);
 
     res.json({
-      vehicles,
-      total,
-      hasMore: total > parseInt(offset) + parseInt(limit)
+      vehicles: vehiclesList,
+      total: totalCount.count,
+      limit: parseInt(limit),
+      offset: parseInt(offset)
     });
-
   } catch (error) {
-    console.error('Get vehicles error:', error);
+    console.error('Error fetching vehicles:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -105,82 +146,57 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const vehicle = await prisma.vehicle.findUnique({
-      where: { id },
-      include: {
-        addedBy: {
-          select: {
-            username: true
-          }
-        }
-      }
-    });
+    const [vehicle] = await db.select({
+      id: vehicles.id,
+      mercedesUrl: vehicles.mercedesUrl,
+      mainImage: vehicles.mainImage,
+      imageGallery: vehicles.imageGallery,
+      price: vehicles.price,
+      manufacturer: vehicles.manufacturer,
+      model: vehicles.model,
+      vehicleNumber: vehicles.vehicleNumber,
+      vehicleType: vehicles.vehicleType,
+      firstRegistration: vehicles.firstRegistration,
+      modelYear: vehicles.modelYear,
+      mileage: vehicles.mileage,
+      power: vehicles.power,
+      fuelType: vehicles.fuelType,
+      transmission: vehicles.transmission,
+      exteriorColor: vehicles.exteriorColor,
+      interiorColor: vehicles.interiorColor,
+      upholstery: vehicles.upholstery,
+      acceleration: vehicles.acceleration,
+      warranty: vehicles.warranty,
+      chargingDuration: vehicles.chargingDuration,
+      electricRange: vehicles.electricRange,
+      energy: vehicles.energy,
+      dealerLocation: vehicles.dealerLocation,
+      distanceFromHildesheim: vehicles.distanceFromHildesheim,
+      travelTimeFromHildesheim: vehicles.travelTimeFromHildesheim,
+      interior: vehicles.interior,
+      exterior: vehicles.exterior,
+      infotainment: vehicles.infotainment,
+      safetyTech: vehicles.safetyTech,
+      packages: vehicles.packages,
+      isFavorite: vehicles.isFavorite,
+      favoriteOrder: vehicles.favoriteOrder,
+      createdAt: vehicles.createdAt,
+      updatedAt: vehicles.updatedAt,
+      addedById: vehicles.addedById,
+      addedByUsername: users.username
+    })
+    .from(vehicles)
+    .leftJoin(users, eq(vehicles.addedById, users.id))
+    .where(eq(vehicles.id, id))
+    .limit(1);
 
     if (!vehicle) {
       return res.status(404).json({ error: 'Vehicle not found' });
     }
 
     res.json(vehicle);
-
   } catch (error) {
-    console.error('Get vehicle error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-router.put('/:id', optionalAuth, async (req: any, res) => {
-  try {
-    const { id } = req.params;
-    const updateData = req.body;
-
-    // Check if vehicle exists
-    const existingVehicle = await prisma.vehicle.findUnique({
-      where: { id }
-    });
-
-    if (!existingVehicle) {
-      return res.status(404).json({ error: 'Vehicle not found' });
-    }
-
-    // Update vehicle
-    const updatedVehicle = await prisma.vehicle.update({
-      where: { id },
-      data: {
-        ...updateData,
-        updatedAt: new Date()
-      }
-    });
-
-    res.json(updatedVehicle);
-
-  } catch (error) {
-    console.error('Update vehicle error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-router.delete('/:id', optionalAuth, async (req: any, res) => {
-  try {
-    const { id } = req.params;
-
-    // Check if vehicle exists
-    const existingVehicle = await prisma.vehicle.findUnique({
-      where: { id }
-    });
-
-    if (!existingVehicle) {
-      return res.status(404).json({ error: 'Vehicle not found' });
-    }
-
-    // Delete vehicle
-    await prisma.vehicle.delete({
-      where: { id }
-    });
-
-    res.json({ message: 'Vehicle deleted successfully' });
-
-  } catch (error) {
-    console.error('Delete vehicle error:', error);
+    console.error('Error fetching vehicle:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

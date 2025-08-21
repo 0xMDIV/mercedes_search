@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../lib/database';
+import { db } from '../lib/database';
+import { users } from '../db/schema';
+import { eq } from 'drizzle-orm';
 
 interface AuthRequest extends Request {
   user?: {
@@ -22,10 +24,11 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
     const secret = process.env.JWT_SECRET || 'your-secret-key';
     const decoded = jwt.verify(token, secret) as any;
     
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: { id: true, username: true, email: true }
-    });
+    const [user] = await db.select({
+      id: users.id,
+      username: users.username,
+      email: users.email
+    }).from(users).where(eq(users.id, decoded.userId)).limit(1);
 
     if (!user) {
       return res.status(403).json({ error: 'Invalid token' });
@@ -50,10 +53,11 @@ export const optionalAuth = async (req: AuthRequest, res: Response, next: NextFu
     const secret = process.env.JWT_SECRET || 'your-secret-key';
     const decoded = jwt.verify(token, secret) as any;
     
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: { id: true, username: true, email: true }
-    });
+    const [user] = await db.select({
+      id: users.id,
+      username: users.username,
+      email: users.email
+    }).from(users).where(eq(users.id, decoded.userId)).limit(1);
 
     if (user) {
       req.user = user;

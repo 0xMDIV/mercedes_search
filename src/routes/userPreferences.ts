@@ -1,5 +1,7 @@
 import express from 'express';
-import { prisma } from '../lib/database';
+import { db } from '../lib/database';
+import { userPreferences } from '../db/schema';
+import { eq } from 'drizzle-orm';
 import { authenticateToken, optionalAuth } from '../middleware/auth';
 
 const router = express.Router();
@@ -10,16 +12,17 @@ router.get('/', optionalAuth, async (req: any, res) => {
       return res.json({ preferences: [] });
     }
 
-    const userPreferences = await prisma.userPreferences.findUnique({
-      where: { userId: req.user.id }
-    });
+    const [userPrefs] = await db.select()
+      .from(userPreferences)
+      .where(eq(userPreferences.userId, req.user.id))
+      .limit(1);
 
-    if (!userPreferences || !userPreferences.preferences) {
+    if (!userPrefs || !userPrefs.preferences) {
       return res.json({ preferences: [] });
     }
 
-    const preferences = userPreferences.preferences ? 
-      userPreferences.preferences.split('\n').filter((p: string) => p.trim() !== '') : [];
+    const preferences = userPrefs.preferences ? 
+      userPrefs.preferences.split('\n').filter((p: string) => p.trim() !== '') : [];
 
     res.json({ preferences });
 
@@ -39,17 +42,27 @@ router.put('/', authenticateToken, async (req: any, res) => {
 
     const preferencesString = preferences.join('\n');
 
-    const updatedPreferences = await prisma.userPreferences.upsert({
-      where: { userId: req.user.id },
-      update: {
-        preferences: preferencesString,
-        updatedAt: new Date()
-      },
-      create: {
+    // Check if preferences exist
+    const [existingPrefs] = await db.select()
+      .from(userPreferences)
+      .where(eq(userPreferences.userId, req.user.id))
+      .limit(1);
+
+    if (existingPrefs) {
+      // Update existing
+      await db.update(userPreferences)
+        .set({
+          preferences: preferencesString,
+          updatedAt: new Date().toISOString()
+        })
+        .where(eq(userPreferences.userId, req.user.id));
+    } else {
+      // Create new
+      await db.insert(userPreferences).values({
         userId: req.user.id,
         preferences: preferencesString
-      }
-    });
+      });
+    }
 
     res.json({
       message: 'Preferences updated successfully',
