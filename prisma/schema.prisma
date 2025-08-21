@@ -22,7 +22,7 @@ model UserPreferences {
   id          String   @id @default(cuid())
   userId      String   @unique
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  preferences Json     @default("[]")
+  preferences String   @default("")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -31,7 +31,7 @@ model Vehicle {
   id                        String   @id @default(cuid())
   mercedesUrl               String   @unique
   mainImage                 String?
-  imageGallery              Json     @default("[]")
+  imageGallery              String   @default("")
   price                     Float
   manufacturer              String   @default("Mercedes-Benz")
   model                     String
@@ -54,11 +54,11 @@ model Vehicle {
   dealerLocation            String
   distanceFromHildesheim    Float?
   travelTimeFromHildesheim  String?
-  interior                  Json     @default("[]")
-  exterior                  Json     @default("[]")
-  infotainment              Json     @default("[]")
-  safetyTech                Json     @default("[]")
-  packages                  Json     @default("[]")
+  interior                  String   @default("")
+  exterior                  String   @default("")
+  infotainment              String   @default("")
+  safetyTech                String   @default("")
+  packages                  String   @default("")
   isFavorite                Boolean  @default(false)
   favoriteOrder             Int?
   createdAt                 DateTime @default(now())

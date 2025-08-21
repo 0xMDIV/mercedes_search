@@ -567,8 +567,10 @@ class MercedesHelper {
     }
 
     renderVehicleDetails(vehicle) {
-        const imageGallery = vehicle.imageGallery && vehicle.imageGallery.length > 0 ? 
-            vehicle.imageGallery.map(img => 
+        const imageGalleryArray = vehicle.imageGallery ? 
+            vehicle.imageGallery.split('|').filter(img => img.trim() !== '') : [];
+        const imageGallery = imageGalleryArray.length > 0 ? 
+            imageGalleryArray.map(img => 
                 `<img src="${img}" alt="Fahrzeugbild" class="gallery-image" onclick="app.showImageModal('${img}')">`
             ).join('') : '';
 
@@ -698,8 +700,11 @@ class MercedesHelper {
         ];
 
         return sections.map(section => {
-            const features = vehicle[section.key];
-            if (!features || features.length === 0) return '';
+            const featuresString = vehicle[section.key];
+            if (!featuresString || featuresString.trim() === '') return '';
+            
+            const features = featuresString.split('|').filter(f => f.trim() !== '');
+            if (features.length === 0) return '';
 
             return `
                 <div class="accordion mt-3" id="accordion-${section.key}-${vehicle.id}">

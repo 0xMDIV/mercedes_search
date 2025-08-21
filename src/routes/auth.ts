@@ -36,7 +36,7 @@ router.post('/register', async (req, res) => {
         password: hashedPassword,
         preferences: {
           create: {
-            preferences: []
+            preferences: ""
           }
         }
       },

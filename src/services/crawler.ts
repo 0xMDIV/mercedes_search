@@ -146,7 +146,7 @@ export class MercedesCrawler {
       const vehicle: Partial<Vehicle> = {
         mercedesUrl: url,
         mainImage,
-        imageGallery,
+        imageGallery: imageGallery.join('|'),
         model: vehicleData.model || 'Unknown Model',
         price: this.parsePrice(vehicleData.price),
         vehicleNumber: vehicleData.vehicleNumber || '',
@@ -166,11 +166,11 @@ export class MercedesCrawler {
         electricRange: vehicleData.electricRange || '',
         energy: vehicleData.energy || '',
         dealerLocation: vehicleData.dealerLocation || '',
-        interior: vehicleData.interior || [],
-        exterior: vehicleData.exterior || [],
-        infotainment: vehicleData.infotainment || [],
-        safetyTech: vehicleData.safetyTech || [],
-        packages: vehicleData.packages || []
+        interior: (vehicleData.interior || []).join('|'),
+        exterior: (vehicleData.exterior || []).join('|'),
+        infotainment: (vehicleData.infotainment || []).join('|'),
+        safetyTech: (vehicleData.safetyTech || []).join('|'),
+        packages: (vehicleData.packages || []).join('|')
       };
 
       return {

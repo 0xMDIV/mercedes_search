@@ -14,13 +14,14 @@ router.get('/', optionalAuth, async (req: any, res) => {
       where: { userId: req.user.id }
     });
 
-    if (!userPreferences) {
+    if (!userPreferences || !userPreferences.preferences) {
       return res.json({ preferences: [] });
     }
 
-    res.json({ 
-      preferences: userPreferences.preferences || [] 
-    });
+    const preferences = userPreferences.preferences ? 
+      userPreferences.preferences.split('\n').filter((p: string) => p.trim() !== '') : [];
+
+    res.json({ preferences });
 
   } catch (error) {
     console.error('Get preferences error:', error);
@@ -36,21 +37,23 @@ router.put('/', authenticateToken, async (req: any, res) => {
       return res.status(400).json({ error: 'Preferences must be an array' });
     }
 
+    const preferencesString = preferences.join('\n');
+
     const updatedPreferences = await prisma.userPreferences.upsert({
       where: { userId: req.user.id },
       update: {
-        preferences: preferences,
+        preferences: preferencesString,
         updatedAt: new Date()
       },
       create: {
         userId: req.user.id,
-        preferences: preferences
+        preferences: preferencesString
       }
     });
 
     res.json({
       message: 'Preferences updated successfully',
-      preferences: updatedPreferences.preferences
+      preferences: preferences
     });
 
   } catch (error) {

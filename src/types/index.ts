@@ -2,7 +2,7 @@ export interface Vehicle {
   id: string;
   mercedesUrl: string;
   mainImage?: string;
-  imageGallery: string[];
+  imageGallery: string;
   price: number;
   manufacturer: string;
   model: string;
@@ -25,11 +25,11 @@ export interface Vehicle {
   dealerLocation: string;
   distanceFromHildesheim?: number;
   travelTimeFromHildesheim?: string;
-  interior?: string[];
-  exterior?: string[];
-  infotainment?: string[];
-  safetyTech?: string[];
-  packages?: string[];
+  interior?: string;
+  exterior?: string;
+  infotainment?: string;
+  safetyTech?: string;
+  packages?: string;
   isFavorite: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -47,7 +47,7 @@ export interface User {
 export interface UserPreferences {
   id: string;
   userId: string;
-  preferences: string[];
+  preferences: string;
   createdAt: Date;
   updatedAt: Date;
 }
