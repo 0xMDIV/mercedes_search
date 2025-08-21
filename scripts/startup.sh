@@ -15,9 +15,9 @@ mkdir -p /app/data
 if [ ! -f "/app/data/production.db" ]; then
     echo "🗄️  Database not found, initializing..."
     
-    # Run Prisma migrations to create the database
-    echo "🔄 Running Prisma migrations..."
-    npx prisma migrate deploy
+    # Run Prisma db push to create the database
+    echo "🔄 Pushing database schema..."
+    npx prisma db push --accept-data-loss
     
     echo "✅ Database initialized successfully!"
 else
