@@ -70,9 +70,13 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
 # Copy other necessary files
 COPY public ./public
+COPY scripts/startup.sh /usr/local/bin/startup.sh
 
 # Create uploads and data directories
 RUN mkdir -p uploads data
+
+# Make startup script executable
+RUN chmod +x /usr/local/bin/startup.sh
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
@@ -89,4 +93,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD curl -f http://localhost:3000/api/vehicles || exit 1
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["/usr/local/bin/startup.sh"]
