@@ -39,6 +39,9 @@
     "@typescript-eslint/parser": "^8.18.2",
     "eslint": "^9.17.0"
   },
+  "prisma": {
+    "binaryTargets": ["native", "linux-musl", "linux-musl-openssl-3.0.x"]
+  },
   "keywords": ["mercedes", "car", "search", "helper"],
   "author": "Mercedes Helper",
   "license": "MIT"
