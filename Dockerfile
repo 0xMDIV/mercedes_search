@@ -58,12 +58,13 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
+COPY prisma ./prisma/
 
 # Install only production dependencies
 RUN npm ci --only=production && npm cache clean --force
 
 # Regenerate Prisma client for the production environment
-RUN npx prisma generate --schema=./prisma/schema.prisma
+RUN npx prisma generate
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
