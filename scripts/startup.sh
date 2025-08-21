@@ -10,7 +10,6 @@ echo "🚀 Mercedes Helper - Starting up..."
 # Ensure data directory exists and has correct permissions
 echo "📁 Setting up data directory..."
 mkdir -p /app/data
-chmod 755 /app/data
 
 # Check if database exists, if not initialize it
 if [ ! -f "/app/data/production.db" ]; then

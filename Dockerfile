@@ -81,7 +81,8 @@ RUN chmod +x /usr/local/bin/startup.sh
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S mercedes -u 1001 && \
-    chown -R mercedes:nodejs /app
+    chown -R mercedes:nodejs /app && \
+    chmod 755 /app/data
 
 USER mercedes
 
