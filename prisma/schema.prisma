@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  username    String   @unique
+  email       String   @unique
+  password    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  preferences UserPreferences?
+  vehicles    Vehicle[]
+}
+
+model UserPreferences {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferences Json     @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Vehicle {
+  id                        String   @id @default(cuid())
+  mercedesUrl               String   @unique
+  mainImage                 String?
+  imageGallery              Json     @default("[]")
+  price                     Float
+  manufacturer              String   @default("Mercedes-Benz")
+  model                     String
+  vehicleNumber             String
+  vehicleType               String
+  firstRegistration         String
+  modelYear                 Int
+  mileage                   Int
+  power                     String
+  fuelType                  String
+  transmission              String
+  exteriorColor             String
+  interiorColor             String
+  upholstery                String
+  acceleration              String?
+  warranty                  String?
+  chargingDuration          String?
+  electricRange             String?
+  energy                    String?
+  dealerLocation            String
+  distanceFromHildesheim    Float?
+  travelTimeFromHildesheim  String?
+  interior                  Json     @default("[]")
+  exterior                  Json     @default("[]")
+  infotainment              Json     @default("[]")
+  safetyTech                Json     @default("[]")
+  packages                  Json     @default("[]")
+  isFavorite                Boolean  @default(false)
+  favoriteOrder             Int?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+  addedById                 String?
+  addedBy                   User?    @relation(fields: [addedById], references: [id])
+
+  @@index([isFavorite, favoriteOrder])
+  @@index([price])
+  @@index([distanceFromHildesheim])
+  @@index([modelYear])
+}

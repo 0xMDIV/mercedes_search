@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mercedes Helper - Autosuche leicht gemacht</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#"><i class="bi bi-car-front"></i> Mercedes Helper</a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="homeTab">Alle Fahrzeuge</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="favoritesTab">Favoriten <span class="badge bg-warning text-dark" id="favoritesCount">0</span></a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item" id="loginNav" style="display: none;">
+                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
+                    </li>
+                    <li class="nav-item dropdown" id="userNav" style="display: none;">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> <span id="username"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" id="addVehicleBtn"><i class="bi bi-plus-circle"></i> Fahrzeug hinzufügen</a></li>
+                            <li><a class="dropdown-item" href="#" id="managePreferencesBtn"><i class="bi bi-gear"></i> Präferenzen</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid" style="margin-top: 76px;">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar bg-light">
+                <div class="p-3">
+                    <!-- Search -->
+                    <div class="mb-3">
+                        <label for="searchInput" class="form-label"><i class="bi bi-search"></i> Suche</label>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Modell, Händler...">
+                    </div>
+                    
+                    <!-- Sort -->
+                    <div class="mb-3">
+                        <label for="sortSelect" class="form-label"><i class="bi bi-sort-down"></i> Sortierung</label>
+                        <select class="form-select" id="sortSelect">
+                            <option value="price_asc">Preis aufsteigend</option>
+                            <option value="price_desc">Preis absteigend</option>
+                            <option value="distance_asc">Entfernung aufsteigend</option>
+                            <option value="mileage_asc">Laufleistung aufsteigend</option>
+                            <option value="year_desc">Baujahr absteigend</option>
+                            <option value="created_desc">Zuletzt hinzugefügt</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Filters -->
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-funnel"></i> Filter</label>
+                        
+                        <div class="mb-2">
+                            <label for="priceRange" class="form-label">Preis bis (€)</label>
+                            <input type="range" class="form-range" id="priceRange" min="0" max="200000" step="5000" value="200000">
+                            <div class="d-flex justify-content-between">
+                                <small>0€</small>
+                                <small id="priceRangeValue">200.000€</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <label for="fuelTypeFilter" class="form-label">Kraftstoff</label>
+                            <select class="form-select" id="fuelTypeFilter">
+                                <option value="">Alle</option>
+                                <option value="Benzin">Benzin</option>
+                                <option value="Diesel">Diesel</option>
+                                <option value="Elektro">Elektro</option>
+                                <option value="Hybrid">Hybrid</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <label for="transmissionFilter" class="form-label">Getriebe</label>
+                            <select class="form-select" id="transmissionFilter">
+                                <option value="">Alle</option>
+                                <option value="Automatik">Automatik</option>
+                                <option value="Manuell">Manuell</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content Area -->
+            <div class="col-md-9 col-lg-10">
+                <div class="p-3">
+                    <!-- User Preferences Section -->
+                    <div class="card mb-4" id="preferencesCard">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-heart"></i> Was ist mir wichtig beim Auto</h5>
+                            <button class="btn btn-sm btn-outline-primary" id="editPreferencesBtn" style="display: none;">
+                                <i class="bi bi-pencil"></i> Bearbeiten
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="preferencesDisplay">
+                                <p class="text-muted">Melden Sie sich an, um Ihre Präferenzen zu verwalten.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Vehicle List -->
+                    <div id="vehicleList">
+                        <div class="d-flex justify-content-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Laden...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Anmelden</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs" id="authTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login-pane" type="button" role="tab">Login</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register-pane" type="button" role="tab">Registrieren</button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content mt-3" id="authTabContent">
+                        <!-- Login Form -->
+                        <div class="tab-pane fade show active" id="login-pane" role="tabpanel">
+                            <form id="loginForm">
+                                <div class="mb-3">
+                                    <label for="loginUsername" class="form-label">Benutzername oder E-Mail</label>
+                                    <input type="text" class="form-control" id="loginUsername" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="loginPassword" class="form-label">Passwort</label>
+                                    <input type="password" class="form-control" id="loginPassword" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Anmelden</button>
+                            </form>
+                        </div>
+                        
+                        <!-- Register Form -->
+                        <div class="tab-pane fade" id="register-pane" role="tabpanel">
+                            <form id="registerForm">
+                                <div class="mb-3">
+                                    <label for="registerUsername" class="form-label">Benutzername</label>
+                                    <input type="text" class="form-control" id="registerUsername" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="registerEmail" class="form-label">E-Mail</label>
+                                    <input type="email" class="form-control" id="registerEmail" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="registerPassword" class="form-label">Passwort</label>
+                                    <input type="password" class="form-control" id="registerPassword" required>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100">Registrieren</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Vehicle Modal -->
+    <div class="modal fade" id="addVehicleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Fahrzeug hinzufügen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addVehicleForm">
+                        <div class="mb-3">
+                            <label for="vehicleUrl" class="form-label">Mercedes-Benz URL</label>
+                            <input type="url" class="form-control" id="vehicleUrl" placeholder="https://gebrauchtwagen.mercedes-benz.de/vehicle?..." required>
+                            <div class="form-text">Fügen Sie die vollständige URL der Mercedes-Benz Fahrzeugseite ein.</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100" id="crawlBtn">
+                            <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                            Fahrzeug crawlen und hinzufügen
+                        </button>
+                    </form>
+                    <div id="crawlStatus" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preferences Modal -->
+    <div class="modal fade" id="preferencesModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Meine Präferenzen bearbeiten</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="preferencesForm">
+                        <div class="mb-3">
+                            <label for="preferencesTextarea" class="form-label">Was ist mir wichtig beim Auto?</label>
+                            <textarea class="form-control" id="preferencesTextarea" rows="5" placeholder="z.B. Niedrige Laufleistung, gute Ausstattung, zuverlässiger Händler..."></textarea>
+                            <div class="form-text">Jede Zeile wird als separater Punkt angezeigt.</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Speichern</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

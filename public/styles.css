@@ -1,0 +1,276 @@
+/* Custom Styles for Mercedes Helper */
+
+:root {
+    --mercedes-silver: #c8c8c8;
+    --mercedes-dark: #1e1e1e;
+    --mercedes-blue: #0f4c81;
+    --star-color: #ffc107;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.sidebar {
+    min-height: calc(100vh - 76px);
+    border-right: 1px solid #dee2e6;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.vehicle-card {
+    transition: all 0.3s ease;
+    border: 1px solid #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.vehicle-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.vehicle-card.favorite {
+    border-left: 4px solid var(--star-color);
+}
+
+.vehicle-header {
+    cursor: pointer;
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.vehicle-header:hover {
+    background-color: #f8f9fa;
+}
+
+.vehicle-image {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.price-badge {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.favorite-btn {
+    border: none;
+    background: none;
+    color: #ccc;
+    font-size: 1.2rem;
+    transition: color 0.3s ease;
+}
+
+.favorite-btn:hover {
+    color: var(--star-color);
+}
+
+.favorite-btn.active {
+    color: var(--star-color);
+}
+
+.vehicle-details {
+    padding: 1rem;
+}
+
+.spec-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.spec-item:last-child {
+    border-bottom: none;
+}
+
+.spec-label {
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.spec-value {
+    color: #212529;
+}
+
+.image-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.gallery-image {
+    width: 100px;
+    height: 75px;
+    object-fit: cover;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.gallery-image:hover {
+    transform: scale(1.05);
+}
+
+.feature-list {
+    columns: 2;
+    column-gap: 2rem;
+    margin-top: 0.5rem;
+}
+
+.feature-list li {
+    break-inside: avoid;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.distance-info {
+    background-color: #e3f2fd;
+    border-left: 4px solid var(--mercedes-blue);
+    padding: 0.5rem;
+    margin-top: 1rem;
+    border-radius: 0 4px 4px 0;
+}
+
+.map-container {
+    height: 200px;
+    margin-top: 1rem;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.preferences-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.preferences-list li {
+    padding: 0.5rem;
+    margin-bottom: 0.25rem;
+    background-color: #e3f2fd;
+    border-radius: 4px;
+    border-left: 4px solid var(--mercedes-blue);
+}
+
+.preferences-list li:before {
+    content: "✓ ";
+    color: var(--mercedes-blue);
+    font-weight: bold;
+}
+
+.alert-custom {
+    border-radius: 8px;
+    border: none;
+}
+
+.btn-custom {
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .sidebar {
+        border-right: none;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .vehicle-image {
+        width: 60px;
+        height: 45px;
+    }
+    
+    .feature-list {
+        columns: 1;
+    }
+    
+    .gallery-image {
+        width: 80px;
+        height: 60px;
+    }
+    
+    .spec-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .spec-value {
+        font-weight: 500;
+        margin-top: 0.25rem;
+    }
+}
+
+/* Loading animations */
+.loading-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Accordion customizations */
+.accordion-button:not(.collapsed) {
+    background-color: var(--mercedes-blue);
+    color: white;
+}
+
+.accordion-button:focus {
+    box-shadow: 0 0 0 0.25rem rgba(15, 76, 129, 0.25);
+}
+
+/* Custom badges */
+.badge-custom {
+    background-color: var(--mercedes-blue);
+    color: white;
+}
+
+/* Form enhancements */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--mercedes-blue);
+    box-shadow: 0 0 0 0.25rem rgba(15, 76, 129, 0.25);
+}
+
+/* Table responsiveness */
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Custom scrollbar */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
