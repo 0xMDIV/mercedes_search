@@ -1,6 +1,8 @@
 import express from 'express';
 import axios from 'axios';
-import { prisma } from '../lib/database';
+import { db } from '../lib/database';
+import { vehicles } from '../db/schema';
+import { eq, and, isNull, ne } from 'drizzle-orm';
 
 const router = express.Router();
 
@@ -83,9 +85,10 @@ router.post('/calculate/:vehicleId', async (req, res) => {
   try {
     const { vehicleId } = req.params;
 
-    const vehicle = await prisma.vehicle.findUnique({
-      where: { id: vehicleId }
-    });
+    const [vehicle] = await db.select()
+      .from(vehicles)
+      .where(eq(vehicles.id, vehicleId))
+      .limit(1);
 
     if (!vehicle) {
       return res.status(404).json({ error: 'Vehicle not found' });
@@ -125,13 +128,12 @@ router.post('/calculate/:vehicleId', async (req, res) => {
     }
 
     // Update vehicle with distance and travel time
-    const updatedVehicle = await prisma.vehicle.update({
-      where: { id: vehicleId },
-      data: {
+    await db.update(vehicles)
+      .set({
         distanceFromHildesheim: routeInfo.distance,
         travelTimeFromHildesheim: routeInfo.duration
-      }
-    });
+      })
+      .where(eq(vehicles.id, vehicleId));
 
     res.json({
       vehicleId,
@@ -152,23 +154,20 @@ router.post('/calculate/:vehicleId', async (req, res) => {
 
 router.post('/calculate-all', async (req, res) => {
   try {
-    const vehicles = await prisma.vehicle.findMany({
-      where: {
-        AND: [
-          { dealerLocation: { not: '' } },
-          { distanceFromHildesheim: null }
-        ]
-      },
-      select: {
-        id: true,
-        dealerLocation: true
-      }
-    });
+    const vehiclesList = await db.select({
+      id: vehicles.id,
+      dealerLocation: vehicles.dealerLocation
+    })
+    .from(vehicles)
+    .where(and(
+      ne(vehicles.dealerLocation, ''),
+      isNull(vehicles.distanceFromHildesheim)
+    ));
 
     let processed = 0;
     let errors = 0;
 
-    for (const vehicle of vehicles) {
+    for (const vehicle of vehiclesList) {
       try {
         const dealerCoords = await geocodeLocation(vehicle.dealerLocation);
         
@@ -176,13 +175,12 @@ router.post('/calculate-all', async (req, res) => {
           const routeInfo = await calculateRoute(HILDESHEIM_COORDS, [dealerCoords.lat, dealerCoords.lon]);
           
           if (routeInfo) {
-            await prisma.vehicle.update({
-              where: { id: vehicle.id },
-              data: {
+            await db.update(vehicles)
+              .set({
                 distanceFromHildesheim: routeInfo.distance,
                 travelTimeFromHildesheim: routeInfo.duration
-              }
-            });
+              })
+              .where(eq(vehicles.id, vehicle.id));
             processed++;
           } else {
             errors++;
@@ -202,7 +200,7 @@ router.post('/calculate-all', async (req, res) => {
 
     res.json({
       message: 'Batch distance calculation completed',
-      totalVehicles: vehicles.length,
+      totalVehicles: vehiclesList.length,
       processed,
       errors
     });

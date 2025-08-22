@@ -1,6 +1,8 @@
 import express from 'express';
 import { mercedesCrawler } from '../services/crawler';
-import { prisma } from '../lib/database';
+import { db } from '../lib/database';
+import { vehicles } from '../db/schema';
+import { eq, desc, count } from 'drizzle-orm';
 
 const router = express.Router();
 
@@ -23,20 +25,21 @@ router.post('/crawl', async (req: any, res) => {
     }
 
     // Check if vehicle already exists
-    const existingVehicle = await prisma.vehicle.findUnique({
-      where: { mercedesUrl: url }
-    });
+    const [existingVehicle] = await db.select()
+      .from(vehicles)
+      .where(eq(vehicles.mercedesUrl, url))
+      .limit(1);
 
     if (existingVehicle) {
       // Update existing vehicle
-      const updatedVehicle = await prisma.vehicle.update({
-        where: { mercedesUrl: url },
-        data: {
+      const [updatedVehicle] = await db.update(vehicles)
+        .set({
           ...result.vehicle,
-          updatedAt: new Date(),
-          addedById: req.user.id
-        }
-      });
+          updatedAt: new Date().toISOString(),
+          addedById: req.user?.id
+        })
+        .where(eq(vehicles.mercedesUrl, url))
+        .returning();
 
       return res.json({
         message: 'Vehicle updated successfully',
@@ -45,13 +48,13 @@ router.post('/crawl', async (req: any, res) => {
       });
     } else {
       // Create new vehicle
-      const newVehicle = await prisma.vehicle.create({
-        data: {
+      const [newVehicle] = await db.insert(vehicles)
+        .values({
           ...result.vehicle,
           mercedesUrl: url,
-          addedById: req.user.id
-        } as any
-      });
+          addedById: req.user?.id
+        })
+        .returning();
 
       return res.json({
         message: 'Vehicle crawled and saved successfully',
@@ -68,20 +71,19 @@ router.post('/crawl', async (req: any, res) => {
 
 router.get('/status', async (req, res) => {
   try {
-    const vehicleCount = await prisma.vehicle.count();
-    const recentCrawls = await prisma.vehicle.findMany({
-      take: 5,
-      orderBy: { updatedAt: 'desc' },
-      select: {
-        id: true,
-        model: true,
-        mercedesUrl: true,
-        updatedAt: true
-      }
-    });
+    const [vehicleCount] = await db.select({ count: count() }).from(vehicles);
+    const recentCrawls = await db.select({
+      id: vehicles.id,
+      model: vehicles.model,
+      mercedesUrl: vehicles.mercedesUrl,
+      updatedAt: vehicles.updatedAt
+    })
+    .from(vehicles)
+    .orderBy(desc(vehicles.updatedAt))
+    .limit(5);
 
     res.json({
-      totalVehicles: vehicleCount,
+      totalVehicles: vehicleCount.count,
       recentCrawls
     });
   } catch (error) {
