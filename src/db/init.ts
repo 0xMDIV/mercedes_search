@@ -1,8 +1,16 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
 
 export function initDatabase() {
   const dbPath = process.env.DATABASE_URL?.replace('file:', '') || './data/production.db';
+  
+  // Ensure directory exists
+  const dir = path.dirname(dbPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  
   const sqlite = new Database(dbPath);
 
   // Create tables if they don't exist

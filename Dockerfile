@@ -88,9 +88,10 @@ RUN chmod +x /usr/local/bin/startup.sh
 
 # Create non-root user for security
 RUN groupadd -r mercedes && useradd -r -g mercedes mercedes && \
-    chown -R mercedes:mercedes /app && \
     mkdir -p /home/mercedes/.local/share && \
-    chown -R mercedes:mercedes /home/mercedes
+    chown -R mercedes:mercedes /app && \
+    chown -R mercedes:mercedes /home/mercedes && \
+    chmod 755 /app/data
 
 USER mercedes
 
