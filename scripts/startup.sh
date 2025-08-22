@@ -15,9 +15,9 @@ mkdir -p /app/data
 if [ ! -f "/app/data/production.db" ]; then
     echo "🗄️  Database not found, initializing..."
     
-    # Use drizzle-kit push to create database directly from schema
+    # Create database with our init script
     echo "🔄 Creating database from schema..."
-    npx drizzle-kit push
+    node -e "require('./dist/db/init.js').initDatabase()"
     
     echo "✅ Database initialized successfully!"
 else
