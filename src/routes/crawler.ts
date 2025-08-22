@@ -32,12 +32,17 @@ router.post('/crawl', async (req: any, res) => {
 
     if (existingVehicle) {
       // Update existing vehicle
+      const updateData = {
+        ...result.vehicle,
+        updatedAt: new Date().toISOString(),
+        addedById: req.user?.id,
+        createdAt: undefined // Remove createdAt from update
+      };
+      delete updateData.createdAt;
+      delete updateData.id;
+
       const [updatedVehicle] = await db.update(vehicles)
-        .set({
-          ...result.vehicle,
-          updatedAt: new Date().toISOString(),
-          addedById: req.user?.id
-        })
+        .set(updateData)
         .where(eq(vehicles.mercedesUrl, url))
         .returning();
 
@@ -48,12 +53,20 @@ router.post('/crawl', async (req: any, res) => {
       });
     } else {
       // Create new vehicle
+      const insertData = {
+        ...result.vehicle,
+        mercedesUrl: url,
+        addedById: req.user?.id,
+        createdAt: undefined,
+        updatedAt: undefined,
+        id: undefined
+      };
+      delete insertData.createdAt;
+      delete insertData.updatedAt;
+      delete insertData.id;
+
       const [newVehicle] = await db.insert(vehicles)
-        .values({
-          ...result.vehicle,
-          mercedesUrl: url,
-          addedById: req.user?.id
-        })
+        .values(insertData as any)
         .returning();
 
       return res.json({
