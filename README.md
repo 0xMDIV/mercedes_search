@@ -17,7 +17,7 @@ Eine moderne Webanwendung zur Verwaltung und Suche von Mercedes-Benz Fahrzeugen 
 ### Backend
 - **Node.js** mit TypeScript
 - **Express.js** Web Framework
-- **Prisma** ORM mit SQLite
+- **Drizzle ORM** mit SQLite
 - **Puppeteer** für Web Scraping
 - **JWT** für Authentifizierung
 
