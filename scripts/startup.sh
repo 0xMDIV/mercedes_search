@@ -15,12 +15,9 @@ mkdir -p /app/data
 if [ ! -f "/app/data/production.db" ]; then
     echo "🗄️  Database not found, initializing..."
     
-    # Generate and apply migrations with Drizzle
-    echo "🔄 Generating database migrations..."
-    npm run db:generate
-    
-    echo "🔄 Applying database migrations..."
-    npm run db:migrate
+    # Use drizzle-kit push to create database directly from schema
+    echo "🔄 Creating database from schema..."
+    npx drizzle-kit push
     
     echo "✅ Database initialized successfully!"
 else
